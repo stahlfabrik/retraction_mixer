@@ -4,7 +4,9 @@ import re
 import argparse
 import os
 import glob
+from prettytable import PrettyTable
 
+t = PrettyTable(['File','retract_length','retract_speed','retract_lift','filament_retract_length','filament_retract_speed','filament_retract_lift'])
 def dir_path(string):
     if os.path.isdir(string):
         return string
@@ -51,11 +53,59 @@ def get_gcode_layer_count(fname):
     return layers_found
 
 def print_gcode_retraction_settings(fname):
-    print(f'Retraction settings in file {fname}:')
+    retract_length = None
+    retract_lift = None
+    retract_speed = None
+    filament_retract_length = None
+    filament_retract_lift = None
+    filament_retract_speed = None
     with open(fname) as open_file:
         for line in open_file:
-            if line.startswith('; retract_'):
-                print(line, end='')
+
+            if line.startswith('; retract_length '):
+                retract_length = re.search('.* = ([.0-9]+)', line)
+                if retract_length:
+                    retract_length = retract_length.group(1)
+                else:
+                    retract_length = 'n.a.'    
+
+            if line.startswith('; retract_speed '):
+                retract_speed = re.search('.* = ([.0-9]+)', line)
+                if retract_speed:
+                    retract_speed = retract_speed.group(1)
+                else:
+                    retract_speed = 'n.a.'
+                    
+            if line.startswith('; retract_lift '):
+                retract_lift = re.search('.* = ([.0-9]+)', line)
+                if retract_lift:
+                    retract_lift = retract_lift.group(1)
+                else:
+                    retract_lift = 'n.a.'
+
+            if line.startswith('; filament_retract_speed '):
+                filament_retract_speed = re.search('.* = ([.0-9]+)', line)
+                if filament_retract_speed:
+                    filament_retract_speed = filament_retract_speed.group(1)
+                else:
+                    filament_retract_speed = 'n.a.'
+            
+
+            if line.startswith('; filament_retract_length '):
+                filament_retract_length = re.search('.* = ([.0-9]+)', line)
+                if filament_retract_length:
+                    filament_retract_length = filament_retract_length.group(1)
+                else:
+                    filament_retract_length = 'n.a.'    
+
+            if line.startswith('; filament_retract_lift '):
+                filament_retract_lift = re.search('.* = ([.0-9]+)', line)
+                if filament_retract_lift:
+                    filament_retract_lift = filament_retract_lift.group(1)
+                else:
+                    filament_retract_lift = 'n.a.'
+            
+    t.add_row([os.path.basename(fname),retract_length,retract_speed,retract_lift,filament_retract_length,filament_retract_speed,filament_retract_lift])
 
 def get_gcode_max_layer_height(fname):
     max_layer_height = 0.0
@@ -99,14 +149,14 @@ for height in layer_heights:
         print(f'Given height {height} is bigger than maximum layer height {max_layer_height}. Exiting')
         exit()
 
-print('##########')
+print('Retraction settings found:')
 for in_file in in_files:
     print_gcode_retraction_settings(in_file)
-    print('##########')
+print(t)
 
 with open(out_file_path, 'w') as out_file:
     def write_line_out(line):
-        out_file.write(f"{i} ### {line}")
+        out_file.write(line)
 
     in_wanted_line = True
     for i, in_file in enumerate(in_files):
